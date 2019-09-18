@@ -5,6 +5,7 @@ const profile = require("./routes/api/profile");
 const posts = require("./routes/api/posts");
 const bodyParser = require("body-parser");
 
+
 const app = express(); //instance of express
 //Body parser middleware
 app.use(
