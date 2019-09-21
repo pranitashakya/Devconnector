@@ -3,6 +3,9 @@ const router = express.Router();
 const User = require("../../models/User");
 const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const keys = require("../../config/keys");
+const passport = require('passport');
 
 //testing page
 //router.get("/test", (req, res) =>
@@ -15,7 +18,6 @@ const bcrypt = require("bcryptjs");
 //@desc Register a user
 //@access Public
 router.post("/register", (req, res) => {
-  //built in function of mongb findone
   User.findOne({ email: req.body.email })
     .then(user => {
       if (user) {
@@ -31,7 +33,6 @@ router.post("/register", (req, res) => {
         const newUser = new User({
           name: req.body.name,
           email: req.body.email,
-          //avatar: avatar,
           avatar,
           password: req.body.password
         });
@@ -47,10 +48,6 @@ router.post("/register", (req, res) => {
               .catch(err => console.log(err));
           });
         });
-        //for testing only
-        //return res.status(200).json({
-        // msg:'Sucess'
-        // })
       }
     })
     .catch(err => console.log(err));
@@ -59,9 +56,11 @@ router.post("/register", (req, res) => {
 //@route POST api/users/login
 //@desc Register a user/return JWT token
 //@access Public
+
 router.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+
   //Find user by email
   User.findOne({ email })
     .then(user => {
@@ -70,8 +69,48 @@ router.post("/login", (req, res) => {
           email: "User not found"
         });
       }
+      bcrypt
+        .compare(password, user.password)
+        .then(isMatch => {
+          if (!isMatch) {
+            return res.status(400).json({
+              password: "Password does not match."
+            });
+          }
+          const payload = {
+            id: user.id,
+            name: user.name,
+            avatar: user.avatar
+          };
+          jwt.sign(
+            payload,
+            keys.secretOrKey,
+            { expiresIn: 3600 },
+            (err, token) => {
+              if (err) throw err;
+
+              return res.json({
+                success: true,
+                token: "Bearer " + token
+              });
+            }
+          );
+        })
+        .catch(err => console.log(err));
     })
     .catch(err => console.log(err));
 });
+
+//@route GET api/users/current (get me current user)
+//@desc return current user
+//@access Private
+
+router.get(
+  "/current",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    res.json({ msg: "Success" });
+  }
+);
 
 module.exports = router;
