@@ -6,6 +6,9 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const keys = require("../../config/keys");
 const passport = require("passport");
+
+// Load input validation
+
 const validateRegisterInput = require("../../validation/register");
 const validateLoginInput = require("../../validation/login");
 
@@ -47,7 +50,7 @@ router.post("/register", (req, res) => {
           avatar,
           password: req.body.password
         });
-
+// Hash password before saving in database
         bcrypt.genSalt(10, (err, salt) => {
           if (err) throw err;
           bcrypt.hash(newUser.password, salt, (err, hash) => {
@@ -78,13 +81,14 @@ router.post("/login", (req, res) => {
   const password = req.body.password;
 
   //Find user by email
+  //If valid input, use MongoDB’s User.findOne() to see if the user exists
   User.findOne({ email })
     .then(user => {
       if (!user) {
         errors.email = "User not found";
         return res.status(404).json(errors);
       }
-
+      //If user exists, use bcryptjs to compare submitted password with hashed password in our database
       bcrypt
         .compare(password, user.password)
         .then(isMatch => {
@@ -92,6 +96,7 @@ router.post("/login", (req, res) => {
             errors.password = "Password does not match.";
             return res.status(400).json(errors);
           }
+          //If passwords match, create our JWT Payload
           const payload = {
             id: user.id,
             name: user.name,
