@@ -1,11 +1,12 @@
-import { SET_CURRENT_USER } from '../actions/types';
 import isEmpty from '../validation/is-empty';
+
+import { SET_CURRENT_USER } from '../actions/types';
 
 const initialState = {
   isAuthenticated: false,
   user: {}
 };
-//A reducer is just a function. 
+
 export default function (state = initialState, action) {
   switch (action.type) {
     case SET_CURRENT_USER:
